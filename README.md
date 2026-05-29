@@ -1,0 +1,1 @@
+# mini_plataforma_fintech
