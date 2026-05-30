@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+body {
+  @apply bg-belo-dark-base text-belo-light-text font-sans antialiased;
+}

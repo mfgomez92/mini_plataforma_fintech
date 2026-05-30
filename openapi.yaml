@@ -1,0 +1,244 @@
+openapi: 3.0.0
+info:
+  title: Mini Plataforma Fintech API
+  description: API RESTful para la gestión y aprobación de transacciones financieras con notificaciones en tiempo real.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Servidor Local
+
+paths:
+  /health:
+    get:
+      summary: Healthcheck del sistema
+      description: Verifica el estado de la API Express y la conexión a la base de datos PostgreSQL.
+      responses:
+        '200':
+          description: El servicio está disponible y conectado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: SUCCESS
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        example: OK
+                      message:
+                        type: string
+                        example: Fintech API is running
+                      database:
+                        type: string
+                        example: Connected
+        '500':
+          description: Falla en la conexión con la base de datos.
+
+  /api/events:
+    get:
+      summary: Canal de Eventos en Tiempo Real (SSE)
+      description: Expone una conexión persistente Server-Sent Events (SSE) para recibir eventos sobre el estado de las transacciones.
+      responses:
+        '200':
+          description: Stream SSE establecido exitosamente.
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: text/event-stream
+            Cache-Control:
+              schema:
+                type: string
+                example: no-cache
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+
+  /api/transactions:
+    get:
+      summary: Obtener lista de transacciones paginada
+      description: Retorna transacciones del sistema con filtros opcionales.
+      parameters:
+        - in: query
+          name: userId
+          schema:
+            type: string
+            format: uuid
+          required: false
+          description: ID del usuario para filtrar movimientos (origen o destino).
+        - in: query
+          name: estado
+          schema:
+            type: string
+            enum: [PENDIENTE, CONFIRMADA, RECHAZADA]
+          required: false
+          description: Filtrar transacciones por su estado actual.
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          required: false
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          required: false
+      responses:
+        '200':
+          description: Lista paginada obtenida.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: SUCCESS
+                  data:
+                    type: object
+                    properties:
+                      transactions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Transaction'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+    post:
+      summary: Crear nueva transacción
+      description: Crea una transacción pendiente o confirmada según el monto.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - origenId
+                - destinoId
+                - monto
+              properties:
+                origenId:
+                  type: string
+                  format: uuid
+                destinoId:
+                  type: string
+                  format: uuid
+                monto:
+                  type: number
+                  minimum: 0.01
+      responses:
+        '201':
+          description: Transacción creada.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: SUCCESS
+                  data:
+                    $ref: '#/components/schemas/Transaction'
+
+  /api/transactions/{id}/approve:
+    patch:
+      summary: Aprobar transacción pendiente
+      description: Cambia el estado a CONFIRMADA y transfiere los balances entre usuarios.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+      responses:
+        '200':
+          description: Transacción aprobada.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: SUCCESS
+                  data:
+                    $ref: '#/components/schemas/Transaction'
+
+  /api/transactions/{id}/reject:
+    patch:
+      summary: Rechazar transacción pendiente
+      description: Marca la transacción como RECHAZADA.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                motivo:
+                  type: string
+      responses:
+        '200':
+          description: Transacción rechazada.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: SUCCESS
+                  data:
+                    $ref: '#/components/schemas/Transaction'
+
+components:
+  schemas:
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        origenId:
+          type: string
+          format: uuid
+        destinoId:
+          type: string
+          format: uuid
+        monto:
+          type: number
+        estado:
+          type: string
+          enum: [PENDIENTE, CONFIRMADA, RECHAZADA]
+        motivoRechazo:
+          type: string
+          nullable: true
+        fecha:
+          type: string
+          format: date-time
+
+    Pagination:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer

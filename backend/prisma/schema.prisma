@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     String        @id @default(uuid()) @db.Uuid
+  nombre                 String
+  email                  String        @unique
+  saldo                  Decimal       @default(0) @db.Decimal(12, 2)
+  transaccionesEnviadas  Transaction[] @relation("TransaccionesEnviadas")
+  transaccionesRecibidas Transaction[] @relation("TransaccionesRecibidas")
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+}
+
+enum EstadoTransaccion {
+  PENDIENTE
+  CONFIRMADA
+  RECHAZADA
+}
+
+model Transaction {
+  id             String            @id @default(uuid()) @db.Uuid
+  origenId       String            @db.Uuid
+  destinoId      String            @db.Uuid
+  monto          Decimal           @db.Decimal(12, 2)
+  estado         EstadoTransaccion @default(PENDIENTE)
+  motivoRechazo  String?           @map("motivo_rechazo")
+  fecha          DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  origen  User @relation("TransaccionesEnviadas", fields: [origenId], references: [id])
+  destino User @relation("TransaccionesRecibidas", fields: [destinoId], references: [id])
+
+  @@index([origenId])
+  @@index([destinoId])
+  @@index([estado])
+}
