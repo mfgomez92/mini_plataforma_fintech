@@ -1,77 +1,170 @@
 # Mini Plataforma Fintech
 
-Una solución full-stack robusta diseñada para enrutar, validar y gestionar pagos internos entre cuentas virtuales en pesos. Esta plataforma consta de una **API REST** segura y escalable y una **Interfaz Web en React** diseñada para operadores.
+Una solución full-stack robusta, escalable y contenerizada para la gestión, validación y procesamiento de pagos internos entre cuentas virtuales en pesos. Esta plataforma consta de una **API REST** de alto rendimiento en el backend y un **Dashboard de Operaciones** web interactivo en el frontend.
 
-El sistema está arquitecturado con un riguroso enfoque en el **manejo de concurrencia**, la **atomicidad transaccional** y la **eficiencia del rendimiento** mediante la separación de capas y la paginación de datos.
-
----
-
-## Stack Tecnológico
-
-### Backend
-- **Core**: Node.js con Express y TypeScript.
-- **ORM**: Prisma ORM (para consultas y migraciones seguras).
-- **Base de Datos**: PostgreSQL (para soporte nativo de bloqueos concurrentes y transacciones ACID).
-- **Testing**: Jest con `ts-jest` (pruebas unitarias y mocks de persistencia).
-
-### Frontend
-- **Core**: React 19 con Vite y TypeScript (optimizaciones de empaquetado mediante *Vendor Chunking*).
-- **Gestión de Estado Asíncrono**: React Query (`@tanstack/react-query`) para cacheado y sincronización eficiente con el servidor.
-- **Estilos**: Tailwind CSS (extensión personalizada para el *Belo Design System*).
-- **Iconos**: Lucide React.
-- **Testing**: Vitest con Testing Library y JSDOM.
+El sistema ha sido arquitecturado bajo rigurosos estándares profesionales para garantizar la **atomicidad transaccional**, **prevención de condiciones de carrera y deadlocks**, **paginación eficiente en servidor** y **notificaciones en tiempo real** mediante eventos persistentes.
 
 ---
 
-## Cómo Ejecutar el Proyecto
+## 🛠️ Stack Tecnológico
 
-El proyecto está completamente contenerizado mediante **Docker** y orquestado con **Docker Compose**. Puedes iniciar todo el entorno con un solo comando.
+A continuación se detallan las tecnologías clave utilizadas para construir las diferentes capas de la plataforma:
+
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![React Query](https://img.shields.io/badge/React_Query-FF4154?style=for-the-badge&logo=react-query&logoColor=white)](https://tanstack.com/query/latest)
+
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-39827B?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+
+---
+
+## ⚡ Decisiones Técnicas Clave
+
+Para ofrecer una solución de nivel empresarial, se implementaron las siguientes estrategias de diseño y rendimiento:
+
+*   **Bloqueo Pesimista y Prevención de Deadlocks (`SELECT FOR UPDATE`)**: Todos los movimientos de saldo ocurren en transacciones ACID controladas por Prisma ORM. Se aplican bloqueos de fila exclusivos en base de datos. Para evitar interbloqueos (*deadlocks*) concurrentes, los identificadores únicos (UUIDs) de los usuarios involucrados se ordenan algorítmicamente de forma alfabética antes de solicitar el bloqueo.
+*   **Actualizaciones en Tiempo Real vía Server-Sent Events (SSE)**: En lugar de saturar el servidor con *polling* constante desde el frontend, el backend abre una conexión HTTP persistente (`text/event-stream`). Al aprobar o rechazar una transacción pendiente, se emite un evento del lado del servidor que invalida automáticamente la caché del frontend en tiempo real.
+*   **React Query & Vendor Chunking**: Implementamos `@tanstack/react-query` para la gestión de estados asíncronos en el cliente, optimizando las peticiones de red y cacheando los saldos y transacciones. La compilación de Vite está configurada con *Vendor Chunking* estratégico para aislar librerías pesadas en un bundle persistente en el caché del navegador, reduciendo drásticamente los tiempos de carga iniciales.
+*   **Belo Design System**: Extensión de Tailwind CSS con variables unificadas para el diseño visual (`DESIGN_VARIANCE`) y comportamiento de movimiento (`MOTION_INTENSITY`), logrando una UI oscura premium de alto impacto estético, coherente y fácil de mantener.
+
+---
+
+## 🚀 Guía de Ejecución Rápida (A prueba de fallos)
+
+Toda la infraestructura está dockerizada y configurada mediante Docker Compose para levantar en un solo paso, ejecutando automáticamente las migraciones y sembrando la base de datos con datos de prueba.
 
 ### Prerrequisitos
-Asegúrate de tener instalados:
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
+Asegúrate de contar con:
+- **Docker Engine** (v20.10+)
+- **Docker Compose** (v2.0+)
 
-### Iniciar la Plataforma (Un solo paso)
-Abre una terminal en la raíz del proyecto y ejecuta:
+### Pasos para Iniciar la Plataforma
 
-```bash
-docker-compose up --build -d
-```
+1. **Clonar o ubicarse en la raíz del proyecto**:
+   Abre una terminal en la carpeta principal del proyecto (donde se encuentra `docker-compose.yml`).
 
-Este comando descargará las imágenes necesarias, compilará los contenedores del frontend y backend, levantará la base de datos PostgreSQL, ejecutará automáticamente las migraciones pendientes del ORM y sembrará (*seed*) los datos de prueba de manera automática.
+2. **Ejecutar la orquestación de contenedores**:
+   ```bash
+   docker-compose up --build -d
+   ```
+   > [!IMPORTANT]
+   > Este comando se encargará de:
+   > - Compilar y descargar las imágenes necesarias.
+   > - Configurar e iniciar los servicios de **PostgreSQL**, **Backend API** y **Frontend Web (Nginx)**.
+   > - Ejecutar el script `entrypoint.sh` en el backend, el cual espera a que la base de datos esté lista, corre las migraciones de Prisma y ejecuta la semilla (*seed*) de datos iniciales.
 
-### Detener la Plataforma
-Para detener los contenedores y liberar recursos:
+3. **Verificar el estado de los servicios**:
+   ```bash
+   docker-compose ps
+   ```
 
+### Detener y Limpiar el Entorno
+Para detener la ejecución de la plataforma y liberar los puertos locales:
 ```bash
 docker-compose down
 ```
+Si deseas eliminar también los volúmenes persistentes de la base de datos PostgreSQL:
+```bash
+docker-compose down -v
+```
 
 ---
 
-## Servicios, Puertos y Credenciales
+## 🔌 Servicios y Credenciales
 
-Una vez que Docker Compose termine de levantar los contenedores, los siguientes servicios estarán accesibles:
+Una vez completada la inicialización de Docker Compose, los siguientes servicios estarán expuestos:
 
-| Servicio | URL / Host | Puerto | Credenciales por Defecto |
+| Servicio | URL / Host | Puerto | Descripción / Credenciales |
 | :--- | :--- | :--- | :--- |
-| **Frontend Web** | `http://localhost` | `80` | *Sin credenciales (operador simulado)* |
-| **Backend API** | `http://localhost:3000` | `3000` | *Cabeceras de autenticación inyectadas* |
-| **Base de Datos** | `localhost` | `5432` | **DB**: Definida en `.env`<br>**Usuario**: Definido en `.env`<br>**Password**: Definido en `.env` |
-
-### Endpoints del Backend
-- **Healthcheck**: `GET http://localhost:3000/health` (valida estado de conexión a la BD).
-- **Transacciones**: `GET /api/transactions?userId=...&page=1&limit=5`
-- **Creación**: `POST /api/transactions`
-- **Aprobación**: `PATCH /api/transactions/:id/approve`
-- **Rechazo**: `PATCH /api/transactions/:id/reject`
+| **Frontend Web Dashboard** | [http://localhost](http://localhost) | `80` | Panel de Operador (simula la sesión de "Juan Pérez"). |
+| **Backend REST API** | [http://localhost:3000](http://localhost:3000) | `3000` | API REST para transacciones y eventos SSE. |
+| **PostgreSQL Database** | `localhost` | `5432` | Configurado en `.env` (`user`, `password`, `mini_plataforma_fintech`). |
 
 ---
 
-## Reglas de Negocio Clave
+## 📡 Endpoints de la API REST
 
-1. **Autenticación Simulada**: El frontend inyecta automáticamente la cabecera `x-user-id: operator-123` en todas las solicitudes HTTP a través de interceptores de Axios. El operador "Juan Pérez" se visualiza logueado en la interfaz.
-2. **Paginación en consultas**: El listado de transacciones se pagina en el servidor utilizando `skip` y `take` de Prisma, retornando los resultados correspondientes y metadatos de paginación (`total`, `page`, `limit`, `totalPages`) para evitar cargas ineficientes de memoria.
-3. **Control de Límites**: Las transacciones por montos menores o iguales a $50.000 se confirman y debitan automáticamente. Montos mayores a $50.000 quedan en estado `PENDIENTE` para aprobación o rechazo manual en el panel de operadores sin alterar saldos preliminarmente.
-4. **Garantía ACID**: Todos los movimientos de saldo se ejecutan de manera atómica bajo bloqueos exclusivos de filas (`SELECT FOR UPDATE`) para evitar condiciones de carrera concurrentes (Race Conditions) y sobregiros.
+Los endpoints definidos en el código del servidor coinciden con las especificaciones del archivo [openapi.yaml](file:///c:/Users/mfgom/Desktop/mini_plataforma_fintech/openapi.yaml):
+
+### Endpoints del Sistema
+*   **Healthcheck**: `GET /health`
+    *   *Descripción*: Verifica el estado operativo de la API Express y la conectividad activa con PostgreSQL.
+*   **Canal SSE (Server-Sent Events)**: `GET /api/events`
+    *   *Descripción*: Establece una conexión persistente unidireccional para notificar cambios de estado en tiempo real.
+*   **Usuarios**: `GET /api/users`
+    *   *Descripción*: Retorna una lista con todos los usuarios registrados y sus respectivos saldos en la billetera virtual.
+
+### Endpoints de Transacciones
+*   **Listar Transacciones**: `GET /api/transactions`
+    *   *Query Parameters*:
+        *   `userId` (opcional, UUID): Filtra transferencias enviadas o recibidas por un usuario específico.
+        *   `estado` (opcional): Filtra por estado actual (`PENDIENTE`, `CONFIRMADA`, `RECHAZADA`).
+        *   `page` (opcional, default `1`): Número de página para consulta paginada.
+        *   `limit` (opcional, default `10`): Cantidad máxima de registros a retornar.
+*   **Crear Transacción**: `POST /api/transactions`
+    *   *Request Body (JSON)*:
+        ```json
+        {
+          "origenId": "UUID-Usuario-Origen",
+          "destinoId": "UUID-Usuario-Destino",
+          "monto": 15000.50
+        }
+        ```
+*   **Aprobar Transacción Pendiente**: `PATCH /api/transactions/{id}/approve`
+    *   *Path Parameters*: `id` (UUID de la transacción).
+*   **Rechazar Transacción Pendiente**: `PATCH /api/transactions/{id}/reject`
+    *   *Path Parameters*: `id` (UUID de la transacción).
+    *   *Request Body (JSON, opcional)*:
+        ```json
+        {
+          "motivo": "Excede el límite mensual permitido por el operador."
+        }
+        ```
+
+---
+
+## 💼 Reglas de Negocio Implementadas
+
+1. **Límites de Aprobación Automática**:
+   *   Transacciones **menores o iguales a $50.000**: Se confirman (`CONFIRMADA`) y debitan/acreditan de forma automática e inmediata en un solo paso transaccional.
+   *   Transacciones **mayores a $50.000**: Se registran con estado inicial `PENDIENTE` y no impactan los saldos de los usuarios. Deben ser aprobadas o rechazadas manualmente por un operador de operaciones desde el Dashboard.
+2. **Autenticación e Identidad**:
+   *   El frontend inyecta automáticamente la cabecera `x-user-id: operator-123` en todas sus peticiones mediante interceptores globales de Axios, simulando la sesión de auditoría activa de un operador.
+3. **Control y Seguridad Transaccional**:
+   *   No se permiten transacciones por montos negativos o iguales a cero.
+   *   Un usuario no puede realizar transferencias hacia sí mismo.
+   *   El saldo origen es rigurosamente validado antes de confirmar o aprobar cualquier movimiento financiero.
+
+---
+
+## 🧪 Ejecución de Pruebas Unitarias
+
+La plataforma cuenta con una suite completa de pruebas automatizadas para validar la lógica del backend y los componentes clave del frontend.
+
+### Pruebas del Backend (Jest)
+Ejecuta las pruebas en aislamiento sobre servicios y controladores:
+```bash
+# Ubicarse en el directorio del backend
+cd backend
+# Instalar dependencias locales (si no se está usando Docker)
+npm install
+# Ejecutar la suite de tests
+npm run test
+```
+
+### Pruebas del Frontend (Vitest)
+Ejecuta las pruebas unitarias y de renderizado de componentes con Vitest y JSDOM:
+```bash
+# Ubicarse en el directorio del frontend
+cd frontend
+# Instalar dependencias locales
+npm install
+# Ejecutar la suite de tests
+npm run test
+```
