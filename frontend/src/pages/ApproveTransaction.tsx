@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
 import { useApproveTransaction, useRejectTransaction } from '../hooks/useTransactionActions';
 import { useUsers } from '../hooks/useUsers';
@@ -9,7 +9,7 @@ import { Button, Card, LoadingSpinner, ErrorMessage } from '../components/ui';
 import { DESIGN_VARIANCE, MOTION_INTENSITY } from '../utils/theme';
 
 export const ApproveTransaction: React.FC = () => {
-  // Solicitamos estado PENDIENTE al backend para optimización en servidor
+
   const { data: usersData = [] } = useUsers();
   const { data, isLoading, isError } = useTransactions(undefined, 1, 50, 'PENDIENTE');
   const transactions = data?.transactions;
@@ -19,7 +19,6 @@ export const ApproveTransaction: React.FC = () => {
   const [transactionToReject, setTransactionToReject] = useState<Transaction | null>(null);
   const [rejectReason, setRejectReason] = useState('');
 
-  // Doble protección del lado del cliente (defensive programming)
   const pendingTransactions = useMemo(() => {
     return transactions?.filter(tx => tx.estado === 'PENDIENTE') || [];
   }, [transactions]);
@@ -51,21 +50,6 @@ export const ApproveTransaction: React.FC = () => {
     }
   }, [transactionToReject, rejectReason, reject, handleCloseRejectModal]);
 
-  // Cerrar con Escape
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleCloseRejectModal();
-      }
-    };
-    if (transactionToReject) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [transactionToReject, handleCloseRejectModal]);
-
   return (
     <div className="p-6 max-w-7xl mx-auto animate-in fade-in duration-200">
       <h1 className="text-3xl font-bold text-belo-light-text mb-6">Aprobación de Transacciones</h1>
@@ -77,9 +61,6 @@ export const ApproveTransaction: React.FC = () => {
           <ErrorMessage message="Hubo un error al cargar las transacciones. Por favor, intenta nuevamente." />
         ) : pendingTransactions.length === 0 ? (
           <Card className="flex flex-col items-center justify-center p-12 text-center border-dashed border-2 border-belo-dark-border bg-belo-dark-surface">
-            <p className="text-lg font-medium text-belo-light-text mb-1">
-              No hay transacciones pendientes.
-            </p>
             <p className="text-sm text-belo-light-muted">
               No hay transacciones pendientes de revisión en este momento.
             </p>
@@ -87,8 +68,8 @@ export const ApproveTransaction: React.FC = () => {
         ) : (
           <div className="flex flex-col gap-4">
             {pendingTransactions.map((tx) => (
-              <Card 
-                key={tx.id} 
+              <Card
+                key={tx.id}
                 className={`flex flex-col gap-4 ${DESIGN_VARIANCE.glow.pendiente} ${MOTION_INTENSITY.hover} border border-white/[0.04]`}
               >
                 {/* Fila superior */}
@@ -146,7 +127,7 @@ export const ApproveTransaction: React.FC = () => {
       </div>
 
       {transactionToReject && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-belo-dark-base/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
           role="dialog"
           aria-modal="true"
@@ -156,17 +137,17 @@ export const ApproveTransaction: React.FC = () => {
           <Card className={`max-w-md w-full !p-6 border border-belo-dark-border bg-belo-dark-surface shadow-2xl relative ${MOTION_INTENSITY.animateIn}`}>
             {/* Glow superior de alerta estilo fintech */}
             <div className="absolute top-0 inset-x-0 h-[2px] bg-belo-semantic-error"></div>
-            
+
             <h3 id="modal-title" className="text-xl font-bold text-belo-light-text mb-4 mt-2">
               ¿Estás seguro de rechazar este envío?
             </h3>
             <p id="modal-description" className="text-belo-light-muted mb-4 text-sm">
               Estás a punto de rechazar la transacción por <span className="font-semibold text-belo-light-text">{formatCurrency(transactionToReject.monto)}</span> de {getUserName(transactionToReject.origenId, usersData)} a {getUserName(transactionToReject.destinoId, usersData)}.
             </p>
-            
+
             <div className="mb-6">
               <label htmlFor="motivo" className="block text-sm font-medium text-belo-light-muted mb-1.5">
-                ¿Por qué rechazas esta operación? (opcional)
+                ¿Por qué rechazas esta operación?
               </label>
               <input
                 type="text"

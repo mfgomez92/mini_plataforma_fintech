@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getUsers } from '../services/transactions';
+import { getUsers } from '../services/users';
 import type { User } from '../types';
 
 export const useUsers = () => {

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,13 +8,10 @@ import { UserSelector } from '../components/UserSelector';
 import { Check, AlertCircle } from 'lucide-react';
 import { DESIGN_VARIANCE, MOTION_INTENSITY } from '../utils/theme';
 
-// ─── Schema Zod v4 (validación isomórfica) ───────────────────────────────────
-// z.coerce.number() convierte strings a número antes de validar (ej: input HTML)
 const createTransactionSchema = z
   .object({
     origenId: z.string().min(1, 'Debes seleccionar un usuario de origen'),
     destinoId: z.string().min(1, 'Debes seleccionar un usuario de destino'),
-    // RHF convierte el string del input a number vía { valueAsNumber: true } antes de que Zod valide
     monto: z.number({ error: 'El monto debe ser un número' }).positive('El monto debe ser mayor a 0'),
   })
   .refine((data) => data.origenId !== data.destinoId, {
@@ -25,13 +21,7 @@ const createTransactionSchema = z
 
 type CreateTransactionFormValues = z.infer<typeof createTransactionSchema>;
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 export const CreateTransaction = () => {
-  // Estado de UI para el toggle "modo manual UUID" de cada selector
-  const [isCustomOrigen, setIsCustomOrigen] = useState(false);
-  const [isCustomDestino, setIsCustomDestino] = useState(false);
-
   const { data: users = [], isLoading: isLoadingUsers } = useUsers();
   const { mutate, isPending, isError, error, isSuccess, reset: resetMutation } = useCreateTransaction();
 
@@ -52,9 +42,6 @@ export const CreateTransaction = () => {
       {
         onSuccess: () => {
           resetForm();
-          setIsCustomOrigen(false);
-          setIsCustomDestino(false);
-          // Limpia el estado de éxito/error después de 5s
           setTimeout(() => resetMutation(), 5000);
         },
       },
@@ -104,10 +91,7 @@ export const CreateTransaction = () => {
                     label="¿Desde qué cuenta envías?"
                     value={field.value}
                     onChange={field.onChange}
-                    isCustom={isCustomOrigen}
-                    setIsCustom={setIsCustomOrigen}
                     placeholderSelect="-- Seleccionar usuario origen --"
-                    placeholderInput="Ej: a0000000-0000-0000-0000-..."
                     users={users}
                   />
                 )}
@@ -128,10 +112,7 @@ export const CreateTransaction = () => {
                     label="¿A quién le quieres enviar?"
                     value={field.value}
                     onChange={field.onChange}
-                    isCustom={isCustomDestino}
-                    setIsCustom={setIsCustomDestino}
                     placeholderSelect="-- Seleccionar usuario destino --"
-                    placeholderInput="Ej: b0000000-0000-0000-0000-..."
                     users={users}
                   />
                 )}

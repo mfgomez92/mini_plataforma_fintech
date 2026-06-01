@@ -15,7 +15,7 @@ export default function MainLayout() {
       <aside className={`w-64 ${DESIGN_VARIANCE.glassmorphism.sidebar} flex-shrink-0`}>
         <div className="h-16 flex items-center px-6 border-b border-belo-dark-border/40">
           <h1 className="text-xl font-bold bg-gradient-to-r from-white via-belo-light-text to-belo-green bg-clip-text text-transparent">
-            Belo Operator
+            Belo
           </h1>
         </div>
         <nav className="p-4 space-y-1.5">
@@ -24,10 +24,9 @@ export default function MainLayout() {
               key={item.text}
               to={item.path}
               className={({ isActive }) =>
-                `flex items-center px-4 py-3 text-sm font-medium rounded-xl ${MOTION_INTENSITY.transition} ${
-                  isActive
-                    ? 'bg-belo-purple/15 text-belo-green shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] border-l-2 border-belo-green'
-                    : 'text-belo-light-muted hover:bg-belo-dark-surface/40 hover:text-belo-light-text'
+                `flex items-center px-4 py-3 text-sm font-medium rounded-xl ${MOTION_INTENSITY.transition} ${isActive
+                  ? 'bg-belo-purple/15 text-belo-green shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] border-l-2 border-belo-green'
+                  : 'text-belo-light-muted hover:bg-belo-dark-surface/40 hover:text-belo-light-text'
                 }`
               }
             >

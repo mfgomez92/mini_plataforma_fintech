@@ -5,7 +5,6 @@ import App from './App.tsx';
 import './index.css';
 import { ErrorBoundary } from './components/ErrorBoundary.tsx';
 
-// Instanciar el QueryClient con opciones por defecto de producción
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
