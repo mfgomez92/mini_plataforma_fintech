@@ -102,7 +102,7 @@ describe('ApproveTransaction Page', () => {
 
     renderWithProviders(<ApproveTransaction />);
 
-    expect(screen.getByText('No hay transacciones pendientes.')).toBeInTheDocument();
+    expect(screen.getByText('No hay transacciones pendientes de revisión en este momento.')).toBeInTheDocument();
   });
 
   // 4. Test 3: "Filtra y muestra únicamente las transacciones PENDIENTES"
@@ -159,7 +159,7 @@ describe('ApproveTransaction Page', () => {
     expect(screen.getByText('¿Estás seguro de rechazar este envío?')).toBeInTheDocument();
 
     // Escribe el motivo
-    const input = screen.getByLabelText('¿Por qué rechazas esta operación? (opcional)');
+    const input = screen.getByLabelText('¿Por qué rechazas esta operación?');
     fireEvent.change(input, { target: { value: 'Fondos insuficientes en origen' } });
 
     // Clic en Confirmar Rechazo en el modal

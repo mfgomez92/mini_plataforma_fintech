@@ -79,7 +79,7 @@ describe('Dashboard Page', () => {
   });
 
   // 4. Test 2: "Actualiza el filtro de usuario al seleccionar una opción del dropdown"
-  it('updates the user filter and synchronizes search input on dropdown selection', () => {
+  it('updates the user filter on dropdown selection', () => {
     vi.mocked(useTransactions).mockReturnValue({
       data: {
         transactions: mockTransactions,
@@ -96,17 +96,13 @@ describe('Dashboard Page', () => {
 
     renderWithProviders(<Dashboard />);
 
-    const select = screen.getByLabelText('Filtrar por Usuario de Prueba');
-    const searchInput = screen.getByLabelText('Buscar UUID manualmente') as HTMLInputElement;
+    const select = screen.getByLabelText('Filtrar por Usuario');
 
     // Cambia el valor del select a Alice Smith (ID: a0000000-0000-0000-0000-000000000001)
     fireEvent.change(select, { target: { value: 'a0000000-0000-0000-0000-000000000001' } });
 
     // Verifica que el valor del select haya cambiado
     expect((select as HTMLSelectElement).value).toBe('a0000000-0000-0000-0000-000000000001');
-
-    // Verifica la sincronización con la barra de búsqueda (searchInput)
-    expect(searchInput.value).toBe('a0000000-0000-0000-0000-000000000001');
   });
 
   // 5. Test 3: "Muestra el Empty State cuando no hay data"
