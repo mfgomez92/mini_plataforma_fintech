@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '../test/utils';
-import { Dashboard } from './Dashboard';
+import Dashboard from './Dashboard';
 import { useTransactions } from '../hooks/useTransactions';
 import { useUsers } from '../hooks/useUsers';
 

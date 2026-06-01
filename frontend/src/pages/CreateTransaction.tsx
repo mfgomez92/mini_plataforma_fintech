@@ -21,7 +21,7 @@ const createTransactionSchema = z
 
 type CreateTransactionFormValues = z.infer<typeof createTransactionSchema>;
 
-export const CreateTransaction = () => {
+const CreateTransaction: React.FC = () => {
   const { data: users = [], isLoading: isLoadingUsers } = useUsers();
   const { mutate, isPending, isError, error, isSuccess, reset: resetMutation } = useCreateTransaction();
 

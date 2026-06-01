@@ -8,7 +8,7 @@ import type { Transaction } from '../types';
 import { Button, Card, LoadingSpinner, ErrorMessage } from '../components/ui';
 import { DESIGN_VARIANCE, MOTION_INTENSITY } from '../utils/theme';
 
-export const ApproveTransaction: React.FC = () => {
+const ApproveTransaction: React.FC = () => {
 
   const { data: usersData = [] } = useUsers();
   const { data, isLoading, isError } = useTransactions(undefined, 1, 50, 'PENDIENTE');

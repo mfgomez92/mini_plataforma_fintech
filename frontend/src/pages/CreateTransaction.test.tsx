@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { renderWithProviders } from '../test/utils';
-import { CreateTransaction } from './CreateTransaction';
+import CreateTransaction from './CreateTransaction';
 import { useCreateTransaction } from '../hooks/useCreateTransaction';
 import { useUsers } from '../hooks/useUsers';
 
@@ -24,7 +24,7 @@ const mockReset = vi.fn();
 describe('CreateTransaction Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Retorno por defecto de los hooks mockeados
     vi.mocked(useCreateTransaction).mockReturnValue({
       mutate: mockMutate,
@@ -48,15 +48,15 @@ describe('CreateTransaction Page', () => {
   // 2. Test 1: "Renderiza correctamente el formulario y los textos conversacionales"
   it('renders correctly the form and conversational microcopy', () => {
     renderWithProviders(<CreateTransaction />);
-    
+
     // Título
     expect(screen.getByRole('heading', { name: /enviar dinero/i })).toBeInTheDocument();
-    
+
     // Textos conversacionales (labels)
     expect(screen.getByLabelText('¿Desde qué cuenta envías?')).toBeInTheDocument();
     expect(screen.getByLabelText('¿A quién le quieres enviar?')).toBeInTheDocument();
     expect(screen.getByLabelText('¿Cuánto vas a transferir?')).toBeInTheDocument();
-    
+
     // Botón de submit
     expect(screen.getByRole('button', { name: /confirmar envío/i })).toBeInTheDocument();
   });
@@ -73,7 +73,7 @@ describe('CreateTransaction Page', () => {
     } as unknown as ReturnType<typeof useCreateTransaction>);
 
     renderWithProviders(<CreateTransaction />);
-    
+
     // Al estar isLoading={true}, nuestro botón del UI Kit deshabilita la interacción
     const submitButton = screen.getByRole('button');
     expect(submitButton).toBeDisabled();
@@ -84,7 +84,7 @@ describe('CreateTransaction Page', () => {
   // 4. Test 3: "Llama a la función mutate con los datos correctos al enviar el formulario"
   it('calls mutate with correct data when the form is submitted', async () => {
     renderWithProviders(<CreateTransaction />);
-    
+
     const origenSelect = screen.getByLabelText('¿Desde qué cuenta envías?') as HTMLSelectElement;
     const destinoSelect = screen.getByLabelText('¿A quién le quieres enviar?') as HTMLSelectElement;
     const montoInput = screen.getByLabelText('¿Cuánto vas a transferir?') as HTMLInputElement;
@@ -92,10 +92,10 @@ describe('CreateTransaction Page', () => {
 
     // Selección de usuario de origen (Alice Smith)
     fireEvent.change(origenSelect, { target: { value: 'a0000000-0000-0000-0000-000000000001' } });
-    
+
     // Selección de usuario de destino (Bob Johnson)
     fireEvent.change(destinoSelect, { target: { value: 'b0000000-0000-0000-0000-000000000002' } });
-    
+
     // Monto de transferencia — RHF usa valueAsNumber: true en el register
     Object.defineProperty(montoInput, 'valueAsNumber', { value: 1500, configurable: true });
     fireEvent.change(montoInput, { target: { value: '1500' } });

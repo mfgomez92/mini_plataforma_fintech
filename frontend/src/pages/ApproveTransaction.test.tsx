@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '../test/utils';
-import { ApproveTransaction } from './ApproveTransaction';
+import ApproveTransaction from './ApproveTransaction';
 import { useTransactions } from '../hooks/useTransactions';
 import { useApproveTransaction, useRejectTransaction } from '../hooks/useTransactionActions';
 import { useUsers } from '../hooks/useUsers';
@@ -46,13 +46,13 @@ const mockTransactions = [
 describe('ApproveTransaction Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Configuración por defecto de las acciones de aprobación/rechazo
     vi.mocked(useApproveTransaction).mockReturnValue({
       mutate: mockApprove,
       isPending: false,
     } as unknown as ReturnType<typeof useApproveTransaction>);
-    
+
     vi.mocked(useRejectTransaction).mockReturnValue({
       mutate: mockReject,
       isPending: false,
@@ -77,7 +77,7 @@ describe('ApproveTransaction Page', () => {
     } as unknown as ReturnType<typeof useTransactions>);
 
     const { container } = renderWithProviders(<ApproveTransaction />);
-    
+
     // Busca por la clase animate-spin o selector equivalente
     const spinner = container.querySelector('.animate-spin');
     expect(spinner).toBeInTheDocument();
@@ -101,7 +101,7 @@ describe('ApproveTransaction Page', () => {
     } as unknown as ReturnType<typeof useTransactions>);
 
     renderWithProviders(<ApproveTransaction />);
-    
+
     expect(screen.getByText('No hay transacciones pendientes.')).toBeInTheDocument();
   });
 
