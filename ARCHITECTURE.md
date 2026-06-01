@@ -179,3 +179,53 @@ Para lograr un sistema de notificaciones de baja latencia y optimizar el consumo
 1.  **Unidireccionalidad**: El frontend solo necesita enterarse de cambios aprobados en el backend para refrescar sus paneles. No necesita enviar datos a través del canal persistente (las acciones de crear, aprobar o rechazar se realizan mediante peticiones estándar HTTP POST/PATCH).
 2.  **Protocolo HTTP Estándar**: SSE funciona sobre HTTP tradicional (`text/event-stream`), lo que evita problemas de compatibilidad con proxies, firewalls corporativos o balanceadores de carga que suelen bloquear el protocolo WebSockets (`ws://`).
 3.  **Reconexión Automática**: El navegador, a través del objeto nativo `EventSource`, maneja automáticamente la reconexión con el servidor si el canal se cae de forma temporal, sin necesidad de librerías externas o lógica compleja en React.
+
+---
+
+## 6. Gestión del Estado del Servidor (React Query)
+
+El frontend emplea **`@tanstack/react-query` v5** como solución canónica para todo estado que provenga del servidor (también conocido como *Server State*).
+
+### ¿Por qué React Query sobre `useEffect` + `useState`?
+El patrón manual `useEffect` + `useState` para fetching introduce múltiples fuentes de errores:
+-   **Condiciones de carrera**: Respuestas tardías pueden sobrescribir data más nueva.
+-   **Deduplicación nula**: Múltiples componentes que usan el mismo dato disparan múltiples peticiones independientes.
+-   **Sin caché**: Cada mount del componente re-fetcha aunque la data sea fresca.
+
+React Query resuelve todo esto de forma declarativa:
+-   **Caché inteligente con `staleTime`**: `useUsers` tiene un `staleTime` de 5 minutos. Durante ese periodo, cualquier componente que monte el hook recibe la data inmediatamente desde caché sin nueva petición.
+-   **Deduplicación automática**: Si dos componentes montan `useTransactions` simultáneamente con los mismos parámetros, solo se realiza una petición HTTP.
+-   **Invalidación quirúrgica**: Tras aprobar o rechazar una transacción, `queryClient.invalidateQueries({ queryKey: ['transactions'] })` marca la caché como stale y dispara un re-fetch selectivo, sin tocar otras queries.
+-   **Actualización optimista vía SSE**: El hook `useTransactions` combina `useQuery` con un `EventSource`. Al recibir un evento `transaction:updated`, la caché se actualiza localmente con `setQueryData` sin necesidad de re-fetch.
+
+### Query Keys usadas
+| Query Key | Datos | `staleTime` |
+|---|---|---|
+| `['users']` | Lista de usuarios y saldos | 5 minutos |
+| `['transactions', userId, page, limit, estado]` | Lista paginada de transacciones | Sin staleTime (por defecto 0) |
+
+---
+
+## 7. Formularios y Validación (React Hook Form + Zod)
+
+Todos los formularios del frontend utilizan **`react-hook-form`** en combinación con **`zod`** para validación de esquema.
+
+### Principios de diseño
+1.  **Mínimos re-renders**: `react-hook-form` utiliza referencias de DOM no controladas (*uncontrolled inputs*) por defecto, evitando re-renders en cada keystroke que ocurren con el patrón `onChange` + `useState`.
+2.  **Validación isomórfica**: Los esquemas Zod definen las reglas de validación una sola vez. El mismo esquema puede ser reutilizado en el backend (con `zod.parse`) y en el frontend (vía `zodResolver`), garantizando paridad absoluta de reglas sin duplicación de lógica.
+3.  **Validación de formulario cruzada**: Zod's `.refine()` permite validaciones que involucran múltiples campos. Por ejemplo, en `CreateTransaction`, el `refine` garantiza que el usuario de origen y destino no sean el mismo, mostrando el error en el campo `destinoId` con un mensaje claro.
+4.  **Componentes custom con `Controller`**: El componente `UserSelector` (que tiene su propio estado interno de toggle de modo manual UUID) se integra con RHF mediante el componente `Controller`, que le inyecta `field.value` y `field.onChange` sin romper la API pública del componente.
+
+### Esquema de ejemplo
+```typescript
+const createTransactionSchema = z
+  .object({
+    origenId: z.string().min(1, 'Debes seleccionar un usuario de origen'),
+    destinoId: z.string().min(1, 'Debes seleccionar un usuario de destino'),
+    monto: z.number({ coerce: true }).positive('El monto debe ser mayor a 0'),
+  })
+  .refine((data) => data.origenId !== data.destinoId, {
+    message: 'El origen y destino no pueden ser el mismo usuario',
+    path: ['destinoId'],
+  });
+```

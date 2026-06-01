@@ -10,6 +10,13 @@ export interface Transaction {
   fecha: string;
 }
 
+export interface User {
+  id: string;
+  nombre: string;
+  email?: string;
+  saldo?: number;
+}
+
 export interface ApiError {
   status: string;
   message: string;

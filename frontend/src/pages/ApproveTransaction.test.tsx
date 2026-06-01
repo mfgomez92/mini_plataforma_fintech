@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
+import { renderWithProviders } from '../test/utils';
 import { ApproveTransaction } from './ApproveTransaction';
 import { useTransactions } from '../hooks/useTransactions';
 import { useApproveTransaction, useRejectTransaction } from '../hooks/useTransactionActions';
@@ -75,7 +76,7 @@ describe('ApproveTransaction Page', () => {
       isError: false,
     } as unknown as ReturnType<typeof useTransactions>);
 
-    const { container } = render(<ApproveTransaction />);
+    const { container } = renderWithProviders(<ApproveTransaction />);
     
     // Busca por la clase animate-spin o selector equivalente
     const spinner = container.querySelector('.animate-spin');
@@ -99,7 +100,7 @@ describe('ApproveTransaction Page', () => {
       isError: false,
     } as unknown as ReturnType<typeof useTransactions>);
 
-    render(<ApproveTransaction />);
+    renderWithProviders(<ApproveTransaction />);
     
     expect(screen.getByText('No hay transacciones pendientes.')).toBeInTheDocument();
   });
@@ -120,7 +121,7 @@ describe('ApproveTransaction Page', () => {
       isError: false,
     } as unknown as ReturnType<typeof useTransactions>);
 
-    render(<ApproveTransaction />);
+    renderWithProviders(<ApproveTransaction />);
 
     // Debería renderizarse el monto de la pendiente ($1.000,00) pero no de la confirmada ($2.500,00)
     // El formateador utiliza formato de moneda localizado
@@ -148,7 +149,7 @@ describe('ApproveTransaction Page', () => {
       isError: false,
     } as unknown as ReturnType<typeof useTransactions>);
 
-    render(<ApproveTransaction />);
+    renderWithProviders(<ApproveTransaction />);
 
     // Abre el modal de rechazo
     const rejectBtn = screen.getByRole('button', { name: /rechazar/i });

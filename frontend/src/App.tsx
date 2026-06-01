@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 
 import MainLayout from './layouts/MainLayout';
 import Dashboard from './pages/Dashboard';
@@ -8,9 +8,9 @@ import CreateTransaction from './pages/CreateTransaction';
 import ApproveTransaction from './pages/ApproveTransaction';
 import NotFound from './pages/NotFound';
 
-const queryClient = new QueryClient();
-
 function App() {
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     let eventSource: EventSource | null = null;
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -70,21 +70,19 @@ function App() {
         clearTimeout(reconnectTimeout);
       }
     };
-  }, []);
+  }, [queryClient]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<MainLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="create" element={<CreateTransaction />} />
-            <Route path="approve" element={<ApproveTransaction />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<MainLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="create" element={<CreateTransaction />} />
+          <Route path="approve" element={<ApproveTransaction />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
 

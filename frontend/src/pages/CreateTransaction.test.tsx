@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { renderWithProviders } from '../test/utils';
 import { CreateTransaction } from './CreateTransaction';
 import { useCreateTransaction } from '../hooks/useCreateTransaction';
 import { useUsers } from '../hooks/useUsers';
@@ -46,7 +47,7 @@ describe('CreateTransaction Page', () => {
 
   // 2. Test 1: "Renderiza correctamente el formulario y los textos conversacionales"
   it('renders correctly the form and conversational microcopy', () => {
-    render(<CreateTransaction />);
+    renderWithProviders(<CreateTransaction />);
     
     // Título
     expect(screen.getByRole('heading', { name: /enviar dinero/i })).toBeInTheDocument();
@@ -71,7 +72,7 @@ describe('CreateTransaction Page', () => {
       error: null,
     } as unknown as ReturnType<typeof useCreateTransaction>);
 
-    render(<CreateTransaction />);
+    renderWithProviders(<CreateTransaction />);
     
     // Al estar isLoading={true}, nuestro botón del UI Kit deshabilita la interacción
     const submitButton = screen.getByRole('button');
@@ -81,13 +82,13 @@ describe('CreateTransaction Page', () => {
   });
 
   // 4. Test 3: "Llama a la función mutate con los datos correctos al enviar el formulario"
-  it('calls mutate with correct data when the form is submitted', () => {
-    render(<CreateTransaction />);
+  it('calls mutate with correct data when the form is submitted', async () => {
+    renderWithProviders(<CreateTransaction />);
     
-    const origenSelect = screen.getByLabelText('¿Desde qué cuenta envías?');
-    const destinoSelect = screen.getByLabelText('¿A quién le quieres enviar?');
-    const montoInput = screen.getByLabelText('¿Cuánto vas a transferir?');
-    const submitButton = screen.getByRole('button', { name: /confirmar envío/i });
+    const origenSelect = screen.getByLabelText('¿Desde qué cuenta envías?') as HTMLSelectElement;
+    const destinoSelect = screen.getByLabelText('¿A quién le quieres enviar?') as HTMLSelectElement;
+    const montoInput = screen.getByLabelText('¿Cuánto vas a transferir?') as HTMLInputElement;
+    const form = origenSelect.closest('form') as HTMLFormElement;
 
     // Selección de usuario de origen (Alice Smith)
     fireEvent.change(origenSelect, { target: { value: 'a0000000-0000-0000-0000-000000000001' } });
@@ -95,13 +96,20 @@ describe('CreateTransaction Page', () => {
     // Selección de usuario de destino (Bob Johnson)
     fireEvent.change(destinoSelect, { target: { value: 'b0000000-0000-0000-0000-000000000002' } });
     
-    // Monto de transferencia
+    // Monto de transferencia — RHF usa valueAsNumber: true en el register
+    Object.defineProperty(montoInput, 'valueAsNumber', { value: 1500, configurable: true });
     fireEvent.change(montoInput, { target: { value: '1500' } });
 
-    // Confirmar
-    fireEvent.click(submitButton);
+    // Confirmar vía submit (RHF handleSubmit es async: valida con Zod antes de llamar mutate)
+    await act(async () => {
+      fireEvent.submit(form);
+    });
 
-    expect(mockMutate).toHaveBeenCalledTimes(1);
+    // waitFor espera a que la Promise del handleSubmit resuelva y llame a mutate
+    await waitFor(() => {
+      expect(mockMutate).toHaveBeenCalledTimes(1);
+    });
+
     expect(mockMutate).toHaveBeenCalledWith(
       {
         origenId: 'a0000000-0000-0000-0000-000000000001',

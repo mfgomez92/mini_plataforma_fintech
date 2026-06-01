@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useCreateTransaction } from '../hooks/useCreateTransaction';
 import { useUsers } from '../hooks/useUsers';
 import { Button, Card, LoadingSpinner } from '../components/ui';
@@ -6,54 +9,60 @@ import { UserSelector } from '../components/UserSelector';
 import { Check, AlertCircle } from 'lucide-react';
 import { DESIGN_VARIANCE, MOTION_INTENSITY } from '../utils/theme';
 
-export const CreateTransaction: React.FC = () => {
-  const [origenId, setOrigenId] = useState('');
-  const [destinoId, setDestinoId] = useState('');
+// ─── Schema Zod v4 (validación isomórfica) ───────────────────────────────────
+// z.coerce.number() convierte strings a número antes de validar (ej: input HTML)
+const createTransactionSchema = z
+  .object({
+    origenId: z.string().min(1, 'Debes seleccionar un usuario de origen'),
+    destinoId: z.string().min(1, 'Debes seleccionar un usuario de destino'),
+    // RHF convierte el string del input a number vía { valueAsNumber: true } antes de que Zod valide
+    monto: z.number({ error: 'El monto debe ser un número' }).positive('El monto debe ser mayor a 0'),
+  })
+  .refine((data) => data.origenId !== data.destinoId, {
+    message: 'El origen y destino no pueden ser el mismo usuario',
+    path: ['destinoId'],
+  });
+
+type CreateTransactionFormValues = z.infer<typeof createTransactionSchema>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const CreateTransaction = () => {
+  // Estado de UI para el toggle "modo manual UUID" de cada selector
   const [isCustomOrigen, setIsCustomOrigen] = useState(false);
   const [isCustomDestino, setIsCustomDestino] = useState(false);
-  const [monto, setMonto] = useState<number | ''>('');
-  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: users = [], isLoading: isLoadingUsers } = useUsers();
-  const { mutate, isPending, isError, error, isSuccess, reset } = useCreateTransaction();
+  const { mutate, isPending, isError, error, isSuccess, reset: resetMutation } = useCreateTransaction();
 
-  useEffect(() => {
-    return () => {
-      if (resetTimerRef.current) {
-        clearTimeout(resetTimerRef.current);
-      }
-    };
-  }, []);
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset: resetForm,
+    formState: { errors },
+  } = useForm<CreateTransactionFormValues>({
+    resolver: zodResolver(createTransactionSchema),
+    defaultValues: { origenId: '', destinoId: '', monto: 0 },
+  });
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    if (!origenId || !destinoId || monto === '') return;
+  const onSubmit = (data: CreateTransactionFormValues) => {
+    mutate(
+      { origenId: data.origenId, destinoId: data.destinoId, monto: data.monto },
+      {
+        onSuccess: () => {
+          resetForm();
+          setIsCustomOrigen(false);
+          setIsCustomDestino(false);
+          // Limpia el estado de éxito/error después de 5s
+          setTimeout(() => resetMutation(), 5000);
+        },
+      },
+    );
+  };
 
-    if (resetTimerRef.current) {
-      clearTimeout(resetTimerRef.current);
-    }
-    
-    mutate({
-      origenId,
-      destinoId,
-      monto: Number(monto),
-    }, {
-      onSuccess: () => {
-        setOrigenId('');
-        setDestinoId('');
-        setIsCustomOrigen(false);
-        setIsCustomDestino(false);
-        setMonto('');
-        
-        resetTimerRef.current = setTimeout(() => {
-          reset();
-        }, 5000);
-      }
-    });
-  }, [origenId, destinoId, monto, mutate, reset]);
-
-  const errorMessage = isError 
-    ? error?.response?.data?.message || error.message || 'Ocurrió un error al procesar la transacción.'
+  const errorMessage = isError
+    ? error?.response?.data?.message || error?.message || 'Ocurrió un error al procesar la transacción.'
     : null;
 
   return (
@@ -83,30 +92,54 @@ export const CreateTransaction: React.FC = () => {
         {isLoadingUsers ? (
           <LoadingSpinner />
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <UserSelector
-              id="origen-select"
-              label="¿Desde qué cuenta envías?"
-              value={origenId}
-              onChange={setOrigenId}
-              isCustom={isCustomOrigen}
-              setIsCustom={setIsCustomOrigen}
-              placeholderSelect="-- Seleccionar usuario origen --"
-              placeholderInput="Ej: a0000000-0000-0000-0000-..."
-              users={users}
-            />
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Usuario Origen */}
+            <div>
+              <Controller
+                name="origenId"
+                control={control}
+                render={({ field }) => (
+                  <UserSelector
+                    id="origen-select"
+                    label="¿Desde qué cuenta envías?"
+                    value={field.value}
+                    onChange={field.onChange}
+                    isCustom={isCustomOrigen}
+                    setIsCustom={setIsCustomOrigen}
+                    placeholderSelect="-- Seleccionar usuario origen --"
+                    placeholderInput="Ej: a0000000-0000-0000-0000-..."
+                    users={users}
+                  />
+                )}
+              />
+              {errors.origenId && (
+                <p className="mt-1.5 text-sm text-belo-semantic-error">{errors.origenId.message}</p>
+              )}
+            </div>
 
-            <UserSelector
-              id="destino-select"
-              label="¿A quién le quieres enviar?"
-              value={destinoId}
-              onChange={setDestinoId}
-              isCustom={isCustomDestino}
-              setIsCustom={setIsCustomDestino}
-              placeholderSelect="-- Seleccionar usuario destino --"
-              placeholderInput="Ej: b0000000-0000-0000-0000-..."
-              users={users}
-            />
+            {/* Usuario Destino */}
+            <div>
+              <Controller
+                name="destinoId"
+                control={control}
+                render={({ field }) => (
+                  <UserSelector
+                    id="destino-select"
+                    label="¿A quién le quieres enviar?"
+                    value={field.value}
+                    onChange={field.onChange}
+                    isCustom={isCustomDestino}
+                    setIsCustom={setIsCustomDestino}
+                    placeholderSelect="-- Seleccionar usuario destino --"
+                    placeholderInput="Ej: b0000000-0000-0000-0000-..."
+                    users={users}
+                  />
+                )}
+              />
+              {errors.destinoId && (
+                <p className="mt-1.5 text-sm text-belo-semantic-error">{errors.destinoId.message}</p>
+              )}
+            </div>
 
             {/* Campo Monto */}
             <div>
@@ -120,15 +153,16 @@ export const CreateTransaction: React.FC = () => {
                 <input
                   type="number"
                   id="monto"
-                  required
-                  min="0.01"
                   step="0.01"
-                  value={monto}
-                  onChange={(e) => setMonto(e.target.value !== '' ? Number(e.target.value) : '')}
-                  className={`w-full pl-8 pr-4 py-2 bg-transparent border border-belo-dark-border ${DESIGN_VARIANCE.borderRadius.input} text-belo-light-text focus:outline-none focus:ring-2 focus:ring-belo-green min-h-touch ${MOTION_INTENSITY.transition}`}
+                  min="0.01"
+                  {...register('monto', { valueAsNumber: true })}
+                  className={`w-full pl-8 pr-4 py-2 bg-transparent border ${errors.monto ? 'border-belo-semantic-error focus:ring-belo-semantic-error' : 'border-belo-dark-border focus:ring-belo-green'} ${DESIGN_VARIANCE.borderRadius.input} text-belo-light-text focus:outline-none focus:ring-2 min-h-touch ${MOTION_INTENSITY.transition}`}
                   placeholder="0.00"
                 />
               </div>
+              {errors.monto && (
+                <p className="mt-1.5 text-sm text-belo-semantic-error">{errors.monto.message}</p>
+              )}
             </div>
 
             <Button

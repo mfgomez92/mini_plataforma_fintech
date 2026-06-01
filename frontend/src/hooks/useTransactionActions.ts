@@ -10,6 +10,7 @@ export const useApproveTransaction = () => {
     mutationFn: (id: string) => approveTransaction(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
     },
   });
 };
@@ -21,6 +22,8 @@ export const useRejectTransaction = () => {
     mutationFn: (data) => rejectTransaction(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
     },
   });
 };
+

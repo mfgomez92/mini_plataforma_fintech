@@ -15,6 +15,8 @@ A continuación se detallan las tecnologías clave utilizadas para construir las
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![React Query](https://img.shields.io/badge/React_Query-FF4154?style=for-the-badge&logo=react-query&logoColor=white)](https://tanstack.com/query/latest)
+[![React Hook Form](https://img.shields.io/badge/React_Hook_Form-EC5990?style=for-the-badge&logo=reacthookform&logoColor=white)](https://react-hook-form.com/)
+[![Zod](https://img.shields.io/badge/Zod-3E67B1?style=for-the-badge&logo=zod&logoColor=white)](https://zod.dev/)
 
 [![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
@@ -31,6 +33,7 @@ Para ofrecer una solución de nivel empresarial, se implementaron las siguientes
 *   **Bloqueo Pesimista y Prevención de Deadlocks (`SELECT FOR UPDATE`)**: Todos los movimientos de saldo ocurren en transacciones ACID controladas por Prisma ORM. Se aplican bloqueos de fila exclusivos en base de datos. Para evitar interbloqueos (*deadlocks*) concurrentes, los identificadores únicos (UUIDs) de los usuarios involucrados se ordenan algorítmicamente de forma alfabética antes de solicitar el bloqueo.
 *   **Actualizaciones en Tiempo Real vía Server-Sent Events (SSE)**: En lugar de saturar el servidor con *polling* constante desde el frontend, el backend abre una conexión HTTP persistente (`text/event-stream`). Al aprobar o rechazar una transacción pendiente, se emite un evento del lado del servidor que invalida automáticamente la caché del frontend en tiempo real.
 *   **React Query & Vendor Chunking**: Implementamos `@tanstack/react-query` para la gestión de estados asíncronos en el cliente, optimizando las peticiones de red y cacheando los saldos y transacciones. La compilación de Vite está configurada con *Vendor Chunking* estratégico para aislar librerías pesadas en un bundle persistente en el caché del navegador, reduciendo drásticamente los tiempos de carga iniciales.
+*   **Validación Isomórfica con React Hook Form + Zod**: Los formularios del frontend utilizan `react-hook-form` para minimizar re-renders (inputs no controlados) y `zod` para definir esquemas de validación compartibles con el backend. Esto garantiza paridad absoluta de reglas de negocio entre cliente y servidor sin duplicación de lógica, y permite validaciones cruzadas de campos (ej: origen ≠ destino) con mensajes de error contextuales.
 *   **Belo Design System**: Extensión de Tailwind CSS con variables unificadas para el diseño visual (`DESIGN_VARIANCE`) y comportamiento de movimiento (`MOTION_INTENSITY`), logrando una UI oscura premium de alto impacto estético, coherente y fácil de mantener.
 
 ---

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
+import { renderWithProviders } from '../test/utils';
 import { Dashboard } from './Dashboard';
 import { useTransactions } from '../hooks/useTransactions';
 import { useUsers } from '../hooks/useUsers';
@@ -63,7 +64,7 @@ describe('Dashboard Page', () => {
       isError: false,
     } as unknown as ReturnType<typeof useTransactions>);
 
-    render(<Dashboard />);
+    renderWithProviders(<Dashboard />);
 
     // Verifica que el título esté en pantalla
     expect(screen.getByRole('heading', { name: /dashboard de transacciones/i })).toBeInTheDocument();
@@ -93,7 +94,7 @@ describe('Dashboard Page', () => {
       isError: false,
     } as unknown as ReturnType<typeof useTransactions>);
 
-    render(<Dashboard />);
+    renderWithProviders(<Dashboard />);
 
     const select = screen.getByLabelText('Filtrar por Usuario de Prueba');
     const searchInput = screen.getByLabelText('Buscar UUID manualmente') as HTMLInputElement;
@@ -124,7 +125,7 @@ describe('Dashboard Page', () => {
       isError: false,
     } as unknown as ReturnType<typeof useTransactions>);
 
-    render(<Dashboard />);
+    renderWithProviders(<Dashboard />);
 
     // Verifica el texto conversacional del Empty State
     expect(screen.getByText('Aún no hay movimientos en esta cuenta.')).toBeInTheDocument();
